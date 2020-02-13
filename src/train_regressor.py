@@ -10,6 +10,7 @@ import torch.optim as optim
 from torchsummary import summary
 import matplotlib.pyplot as plt
 from PIL import Image
+import deepy.pytorch
 from deepy.pytorch.dataset import CaiMEImageDataset
 import deepy.pytorch.trainer as trainer
 import deepy.pytorch.model as model
