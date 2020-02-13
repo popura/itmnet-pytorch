@@ -9,9 +9,11 @@ import torch.nn as nn
 import torch.optim as optim
 from torchsummary import summary
 import matplotlib.pyplot as plt
-from deepy.pytorch.model import ITMNet
-from deepy.pytorch.trainer import RegressorTrainer
+from PIL import Image
 from deepy.pytorch.dataset import CaiMEImageDataset
+import deepy.pytorch.trainer as trainer
+import deepy.pytorch.model as model
+import deepy.pytorch.transform as paired_transforms
 import deepy.pytorch.layer as layer
 
 parser = argparse.ArgumentParser(description='')
@@ -21,7 +23,7 @@ parser.add_argument('--data', help='Data directory.',
                     default="../data")
 parser.add_argument('--batch_size', help='Batch size',
                     type=int,
-                    default=64)
+                    default=16)
 parser.add_argument('--model', help='Model name for predicting images.',
                     default="ITMNet")
 parser.add_argument('--dn_layer', help='Downsampling layer name.',
@@ -35,18 +37,18 @@ parser.add_argument('--dn_hold_order', help='Order of hold kernel.',
                     default=0)
 parser.add_argument('--loss',
                     help='Loss function for training',
-                    default="cross_entropy")
+                    default="l1")
 parser.add_argument('--seed', help='Random seed',
                     type=int,
                     default=None)
 parser.add_argument('--epoch', help='Number of epochs',
                     type=int,
-                    default=300)
+                    default=1000)
 parser.add_argument('--optimizer', help='Optimizer',
                     default='Adam')
 parser.add_argument('--lr', help='Initial learning rate',
                     type=float,
-                    default=0.1)
+                    default=0.002)
 args = parser.parse_args()
 output_dir = args.o
 data_dir = args.data
@@ -87,21 +89,18 @@ if random_seed is not None:
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+transforms = paired_transforms.Compose(
+    [paired_transforms.PairedRandomHorizontalFlip(p=0.5),
+     paired_transforms.PairedRandomResizedCrop(size=(), scale=(0.6, 1.0), ratio=(3./4., 4./3.), interpolation=Image.BICUBIC),
+     paired_transforms.ToPairedTransform(transforms.ToTensor())])
 
-trainset = CaiMEImageDataset(root=data_dir, train=True,
-                             transform=transform, target_transform=target_transform)
+trainset = CaiMEImageDataset(root=data_dir, train=True, transforms=transforms)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                           shuffle=True, num_workers=2)
 
-testset = torchvision.datasets.CIFAR10(root=data_dir, train=False,
-                                       download=True, transform=transform)
+testset = CaiMEImageDataset(root=data_dir, train=False, transforms=transforms)
 testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                          shuffle=False, num_workers=2)
-classes = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 if dn_layer == "Conv2d":
     down_conv_layer = nn.Conv2d
@@ -113,25 +112,26 @@ elif dn_layer == "DownSampling2d":
 else:
     raise(NotImplementedError())
 
-if model_name == "MyNet":
-    net = model.MyNet(down_conv_layer=down_conv_layer)
-elif "VGG" in model_name:
-    net = model.VGG(model_name, down_sampling_layer=down_conv_layer)
-elif "ResNet" in model_name:
-    net = model.ResNet(model_name, down_sampling_layer=down_conv_layer)
+if model_name.lower() == "unet":
+    net = model.UNet(down_sampling_layer=down_conv_layer)
+elif model_name.lower() == "itmnet": 
+    net = model.ITMNet()
 else:
     raise(NotImplementedError())
 
 net = net.to(device)
-summary(net, input_size=(3, 32, 32))
+summary(net, input_size=(3, 256, 256))
 
-if loss_name == "cross_entropy":
-    criterion = nn.CrossEntropyLoss()
+if loss_name.lower() == "l1":
+    criterion = nn.L1Loss()
+elif loss_name.lower() == "l2":
+    criterion = nn.MSELoss()
 else:
     criterion = nn.CrossEntropyLoss()
 
 if optimizer_name == "Adam":
-    optimizer = optim.Adam(net.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(net.parameters(), lr=learning_rate,
+                           betas=(0.9, 0.999))
 elif optimizer_name == "SGD":
     optimizer = optim.SGD(net.parameters(), lr=learning_rate,
                           momentum=0.9, dampening=0,
@@ -144,25 +144,20 @@ scheduler = optim.lr_scheduler.MultiStepLR(optimizer,
                                            0.1)
 start_time = time.time()
 
-trainer = trainer.ClassifierTrainer(net, optimizer, criterion,
-                                    trainloader, device)
-costs = []
-train_accuracy = []
-test_accuracy = []
+trainer = trainer.RegressorTrainer(net, optimizer, criterion,
+                                   trainloader, device)
+train_costs = []
+test_costs = []
 print('-----Training Started-----')
 for epoch in range(num_epochs):  # loop over the dataset multiple times
-    loss = trainer.train()
-    train_acc = trainer.eval(trainloader)
-    test_acc = trainer.eval(testloader)
-#    if epoch == 4 and model_name == "Net":
-#        trainer.visualize_grad(trainloader)
-    print('Epoch: %03d/%03d | Loss: %.4f | Time: %.2f min | Acc: %.4f/%.4f'
-          % (epoch+1, num_epochs, loss,
+    train_loss = trainer.train()
+    test_loss = trainer.eval(testloader)
+    print('Epoch: %03d/%03d | Time: %.2f min | Loss: %.4f/%.4f'
+          % (epoch+1, num_epochs,
              (time.time() - start_time)/60,
-             train_acc, test_acc))
-    costs.append(loss)
-    train_accuracy.append(train_acc)
-    test_accuracy.append(test_acc)
+             train_loss, test_loss))
+    train_costs.append(train_loss)
+    test_costs.append(test_loss)
     scheduler.step()
 
 print('Total Training Time: %.2f min' % ((time.time() - start_time)/60))
