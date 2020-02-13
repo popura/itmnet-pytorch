@@ -172,16 +172,12 @@ else:
                          + '_' + optimizer_name + '.pth')
 torch.save(net.state_dict(), output_dir+"/"+output_model_name)
 
-plt.plot(range(len(costs)), costs, label='loss')
+plt.plot(range(len(train_costs)), train_costs,
+         label='Loss for training data')
 plt.legend()
 plt.show()
 
-plt.plot(range(len(train_accuracy)), train_accuracy,
-         label='Accuracy for training data')
-plt.legend()
-plt.show()
-
-plt.plot(range(len(test_accuracy)), test_accuracy,
-         label='Accuracy for test data')
+plt.plot(range(len(test_costs)), test_costs,
+         label='Loss for test data')
 plt.legend()
 plt.show()
