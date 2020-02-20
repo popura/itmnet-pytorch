@@ -10,12 +10,12 @@ import torch.optim as optim
 from torchsummary import summary
 import matplotlib.pyplot as plt
 from PIL import Image
-import deepy.pytorch
-from deepy.pytorch.dataset import CaiMEImageDataset
-import deepy.pytorch.trainer as trainer
-import deepy.pytorch.model as model
-import deepy.pytorch.transform as paired_transforms
-import deepy.pytorch.layer as layer
+import deepy
+from deepy.dataset import CaiMEImageDataset
+import deepy.trainer as trainer
+import deepy.model as model
+import deepy.transform as paired_transforms
+import deepy.layer as layer
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-o', help='Output directory of models.',
@@ -78,7 +78,7 @@ print('hold order: ' + str(dn_order))
 print('bias mode: ' + str(dn_bias_mode))
 print('batch size: %d' % batch_size)
 print('loss: ' + loss_name)
-print('seed: %d' % random_seed)
+print('seed: ' + str(random_seed))
 print('optimizer: ' + optimizer_name)
 print('learning rate: %f' % learning_rate)
 
