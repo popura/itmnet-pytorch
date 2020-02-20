@@ -92,7 +92,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 transforms = paired_transforms.Compose(
     [paired_transforms.PairedRandomHorizontalFlip(p=0.5),
-     paired_transforms.PairedRandomResizedCrop(size=(), scale=(0.6, 1.0), ratio=(3./4., 4./3.), interpolation=Image.BICUBIC),
+     paired_transforms.PairedRandomResizedCrop(size=(256, 256), scale=(0.6, 1.0), ratio=(3./4., 4./3.), interpolation=Image.BICUBIC),
      paired_transforms.ToPairedTransform(transforms.ToTensor())])
 
 trainset = CaiMEImageDataset(root=data_dir, train=True, transforms=transforms)
@@ -114,9 +114,9 @@ else:
     raise(NotImplementedError())
 
 if model_name.lower() == "unet":
-    net = model.UNet(down_sampling_layer=down_conv_layer)
+    net = model.UNet(3, 3, down_conv_layer=down_conv_layer)
 elif model_name.lower() == "itmnet": 
-    net = model.ITMNet()
+    net = model.ITMNet(3, 3, down_conv_layer=down_conv_layer)
 else:
     raise(NotImplementedError())
 
