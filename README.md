@@ -3,6 +3,7 @@ This is an implementation for *iTM-Net: Deep Inverse Tone Mapping Using Novel Lo
 
 [Project page](https://sites.google.com/view/kinoshita-yuma-en/publications/itm-net),
 [DOI](https://doi.org/10.1109/ACCESS.2019.2919296)
+
 When you use this implementation for your research work,
 please cite the paper.
 
