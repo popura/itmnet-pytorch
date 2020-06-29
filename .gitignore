@@ -1,10 +1,3 @@
-# Training data and results
-data/
-data_out/
-model/
-result/
-large_results/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
