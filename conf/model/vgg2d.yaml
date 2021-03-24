@@ -1,8 +1,0 @@
-# @package _group_
-name: vgg2d
-param:
-  base_channels: 16
-  depth: 2
-  max_channels: 512
-  down_conv_layer: nn.Conv2d
-  activation: nn.ReLU

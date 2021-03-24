@@ -4,7 +4,7 @@ import numpy as np
 
 import torch
 import torch.nn as nn
-from torchsummary import summary
+from torchinfo import summary
 
 from omegaconf import DictConfig
 
@@ -50,18 +50,21 @@ def get_model(classes: list[str], cfg: DictConfig) -> nn.Module:
 
     if cfg.model.name == "itmnet":
         net = ITMNet(
-            in_channels=1,
-            num_classes=len(classes),
+            in_channels=3,
+            out_channels=3,
             base_channels=cfg.model.param.base_channels,
             depth=cfg.model.param.depth,
             max_channels=cfg.model.param.max_channels,
             conv=nn.Conv2d,
+            up_conv=nn.ConvTranspose2d,
             down_conv=nn.Conv2d,
-            activation=nn.ReLU)
+            normalization=nn.BatchNorm2d,
+            activation=nn.ReLU,
+            final_activation=nn.Identity):
         if device.type == "cuda":
             net = torch.nn.DataParallel(net)
         net = net.to(device)
-        summary(net, input_size=(1, 32, 32))
+        summary(net, input_size=(3, 256, 256))
     else:
         raise NotImplementedError()
 

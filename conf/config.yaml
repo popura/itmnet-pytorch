@@ -1,6 +1,6 @@
 defaults:
-  - dataset: mnist
-  - model: vgg2d
+  - dataset: mydataset
+  - model: itmnet
   - optimizer: adam
   - lr_scheduler: multi_step
 seed: null

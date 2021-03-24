@@ -1,5 +1,5 @@
 # @package _group_
-name: mnist
-path: ./data/
+name: mydataset
+path: ./data/mydataset/
 transforms: null
 download: True
