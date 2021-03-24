@@ -15,6 +15,8 @@ from torchsummary import summary
 from omegaconf import DictConfig, OmegaConf
 import hydra
 
+from deepy.data.dataset import SelfSupervisedDataset
+from deepy.data.vision.dataset import UnorganizedImageDataset
 import deepy.data.transform
 import deepy.data.vision.transform
 from deepy.train.trainer import RegressorTrainer
@@ -31,7 +33,7 @@ import util as myutil
 import train_id as tid
 
 
-def save_model(model: nn.Module, path: str) -> typing.NoReturn:
+def save_model(model: nn.Module, path: str) -> None:
     """Save a DNN model (torch.nn.Module).
 
     Args:
@@ -66,20 +68,24 @@ def get_data_loaders(cfg: DictConfig):
     cwd = hydra.utils.get_original_cwd()
     p = Path(cwd) / cfg.dataset.path
 
-    _, transform = get_transform(cfg)
+    _, transforms = get_transform(cfg)
 
-    trainset = torchvision.datasets.MNIST(
-        str(p),
-        train=True,
-        transform=transform,
-        download=cfg.dataset.download)
+    trainset = SelfSupervisedDataset(
+        UnorganizedImageFolder(
+            str(p / "train"),
+            pre_load=False,
+            loader=hdrpy.io.read, is_valid_file=myutil.is_valid_file),
+        transforms=transforms
+    )
 
-    testset = torchvision.datasets.MNIST(
-        str(p),
-        train=False,
-        transform=transform,
-        download=cfg.dataset.download)
-    
+    valset = SelfSupervisedDataset(
+        UnorganizedImageFolder(
+            str(p / "validation"),
+            pre_load=False,
+            loader=hdrpy.io.read, is_valid_file=myutil.is_valid_file),
+        transforms=transforms
+    )
+
     trainloader = torch.utils.data.DataLoader(
         trainset,
         batch_size=cfg.loader.batch_size,
@@ -87,14 +93,12 @@ def get_data_loaders(cfg: DictConfig):
         num_workers=cfg.loader.num_workers)
 
     valloader = torch.utils.data.DataLoader(
-        testset,
+        valset,
         batch_size=cfg.loader.batch_size,
         shuffle=False,
         num_workers=cfg.loader.num_workers)
     
-    classes = trainset.classes
-
-    return trainloader, valloader, classes
+    return trainloader, valloader
 
 
 def show_history(train_loss, val_loss, path):
@@ -160,7 +164,7 @@ def main(cfg: DictConfig) -> None:
     trainloaders, valloaders, classes = get_data_loaders(cfg)
     net = myutil.get_model(classes, cfg)
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.L1Loss()
     optimizer = get_optimizer(net.parameters(), cfg)
     scheduler = get_scheduler(optimizer, cfg)
     extensions = [ModelSaver(directory=history_dir,
@@ -170,10 +174,10 @@ def main(cfg: DictConfig) -> None:
                                name=lambda x: cfg.model.name+"_history.pth",
                                trigger=IntervalTrigger(period=1))]
 
-    trainer = ClassifierTrainer(net, optimizer, criterion, trainloaders,
-                                scheduler=scheduler, extensions=extensions,
-                                init_epoch=0,
-                                device=device)
+    trainer = RegressorTrainer(net, optimizer, criterion, trainloaders,
+                               scheduler=scheduler, extensions=extensions,
+                               init_epoch=0,
+                               device=device)
     trainer.train(cfg.epoch, valloaders, classes)
 
     save_model(net, str(history_dir / "{}.pth".format(cfg.model.name)))
