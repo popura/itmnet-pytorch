@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from PIL import Image
 
 import torch
 import torch.nn as nn
@@ -14,6 +15,8 @@ from torchinfo import summary
 
 from omegaconf import DictConfig, OmegaConf
 import hydra
+
+import hdrpy
 
 from deepy.data.dataset import SelfSupervisedDataset
 from deepy.data.vision.visiondataset import UnorganizedImageFolder
@@ -52,10 +55,18 @@ def save_model(model: nn.Module, path: str) -> None:
 def get_transform(cfg: DictConfig):
     pre_transforms = None
 
+    dict_cfg_crop = cfg.dataset.transforms.paired_random_resized_crop.param
+    if dict_cfg_crop.interpolation == 'Image.BICUBIC':
+        interpolation = Image.BICUBIC
+
     transforms = deepy.data.transform.PairedCompose([
         deepy.data.transform.ToPairedTransform(
             torchvision.transforms.ToTensor()),
-        deepy.data.vision.transform.PairedRandomResizedCrop(),
+        deepy.data.vision.transform.PairedRandomHorizontalFlip(
+            **cfg.dataset.transforms.paired_random_horizontal_flip.param),
+        deepy.data.vision.transform.PairedRandomResizedCrop(
+            size=tuple(dict_cfg_crop.size), scale=tuple(dict_cfg_crop.scale),
+            ratio=tuple(dict_cfg_crop.ratio), interpolation=interpolation),
         deepy.data.transform.SeparatedTransform(
             transform=mytransform.ReinhardTMO(),
             target_transform=mytransform.RandomEilertsenTMO()),
@@ -161,15 +172,15 @@ def main(cfg: DictConfig) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Training
-    trainloaders, valloaders, classes = get_data_loaders(cfg)
-    net = myutil.get_model(classes, cfg)
+    trainloaders, valloaders = get_data_loaders(cfg)
+    net = myutil.get_model(cfg)
 
     criterion = nn.L1Loss()
     optimizer = get_optimizer(net.parameters(), cfg)
     scheduler = get_scheduler(optimizer, cfg)
     extensions = [ModelSaver(directory=history_dir,
                              name=lambda x: cfg.model.name+"_best.pth",
-                             trigger=MaxValueTrigger(mode="validation", key="total acc")),
+                             trigger=MaxValueTrigger(mode="validation", key="loss")),
                   HistorySaver(directory=history_dir,
                                name=lambda x: cfg.model.name+"_history.pth",
                                trigger=IntervalTrigger(period=1))]
@@ -178,7 +189,7 @@ def main(cfg: DictConfig) -> None:
                                scheduler=scheduler, extensions=extensions,
                                init_epoch=0,
                                device=device)
-    trainer.train(cfg.epoch, valloaders, classes)
+    trainer.train(cfg.epoch, valloaders)
 
     save_model(net, str(history_dir / "{}.pth".format(cfg.model.name)))
 

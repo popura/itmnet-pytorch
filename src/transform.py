@@ -4,7 +4,7 @@ import numpy as np
 
 import torch
 
-import hdrpy.tmo
+import hdrpy
 from deepy.data.transform import Transform
 
 
@@ -17,17 +17,18 @@ class ReinhardTMO(Transform):
     """
     def __init__(
         self,
-        ev: int = 0,
+        ev: float = 0,
         mode: str = "global",
         whitepoint: Union[float, str] = "Inf") -> None:
+        type(hdrpy.tmo.ReinhardTMO())
         self.tmo = hdrpy.tmo.ReinhardTMO(
             ev=ev,
             mode=mode,
             whitepoint=whitepoint)
     
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.tmo(x.clone().detach().numpy())
-        return torch.from_numpy(x.astype(np.float32)).clone()
+        x = self.tmo(x.clone().detach().numpy().transpose((1, 2, 0)))
+        return torch.from_numpy(x.astype(np.float32).transpose((2, 0, 1))).clone()
 
 
 class RandomEilertsenTMO(Transform):
@@ -53,15 +54,20 @@ class RandomEilertsenTMO(Transform):
         sigma_mean: float = 0.6,
         sigma_std: float = 0.1) -> None:
         super().__init__()
+        self.ev_range = ev_range
+        self.exp_mean = exp_mean
+        self.exp_std = exp_std
+        self.sigma_mean = sigma_mean
+        self.sigma_std = sigma_std
     
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
-        ev, exponent, sigma = self.get_param()
+        ev, exponent, sigma = self.get_params()
         tmo = hdrpy.tmo.EilertsenTMO(
             ev=ev,
-            mode=mode,
-            whitepoint=whitepoint)
-        x = tmo(x.clone().detach().numpy())
-        return torch.from_numpy(x.astype(np.float32)).clone()
+            exponent=exponent,
+            sigma=sigma)
+        x = tmo(x.clone().detach().numpy().transpose((1, 2, 0)))
+        return torch.from_numpy(x.astype(np.float32).transpose((2, 0, 1))).clone()
     
     def get_params(self) -> tuple[int, float, float]:
         ev = np.random.uniform(self.ev_range[0], self.ev_range[1])

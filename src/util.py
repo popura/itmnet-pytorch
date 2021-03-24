@@ -8,7 +8,10 @@ from torchinfo import summary
 
 from omegaconf import DictConfig
 
+from deepy.data.dataset import has_file_allowed_extension
+
 from itmnet import ITMNet
+
 
 
 HDR_IMG_EXTENSIONS = ('.hdr', '.exr', '.pfm')
@@ -45,7 +48,7 @@ def set_random_seed(seed: int) -> None:
     torch.backends.cudnn.benchmark = False
 
 
-def get_model(classes: list[str], cfg: DictConfig) -> nn.Module:
+def get_model(cfg: DictConfig) -> nn.Module:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if cfg.model.name == "itmnet":
