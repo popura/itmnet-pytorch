@@ -1,5 +1,19 @@
 # @package _group_
 name: mydataset
 path: ./data/HDRForCNN/
-transforms: null
-download: True
+transforms:
+    paired_random_horizontal_flip:
+      param:
+        p: 0.5
+    paired_random_resized_crop:
+      param:
+        size:
+          - 256
+          - 256
+        scale:
+          - 0.6
+          - 1.0
+        ratio:
+          - 0.75
+          - 1.33
+        interpolation: Image.BICUBIC

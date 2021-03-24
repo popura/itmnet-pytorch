@@ -5,6 +5,6 @@ defaults:
   - lr_scheduler: multi_step
 seed: null
 loader: 
-  batch_size: 64
-  num_workers: 0
+  batch_size: 16
+  num_workers: 10
 epoch: 200

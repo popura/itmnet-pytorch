@@ -39,13 +39,11 @@ class ITMNet(UNet):
                                     out_channels=in_channels,
                                     conv=conv,
                                     normalization=normalization,
-                                    kernel_size=kernel_size,
-                                    padding=padding,
                                     activation=activation),
                 down_conv(in_channels=in_channels,
                           out_channels=out_channels,
                           kernel_size=down_kernel_size,
-                          donw_padding=down_padding,
+                          padding=down_padding,
                           stride=2, bias=False),
             )
 
@@ -129,7 +127,11 @@ class ITMNet(UNet):
             )
         )
         self.g_down = nn.Sequential(*list(ge_layers))
-        self.cat = self.gl_cat(512+64, 512)
+        self.cat = self.gl_cat(
+            in_channels=512+64,
+            out_channels=512,
+            conv=conv,
+            normalization=normalization)
         
     def forward(self, x):
         skip_connections = []

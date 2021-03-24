@@ -25,7 +25,26 @@ year = {2019}
 ```
 
 # Requirements
-- Python 3.7 or later
-- Pytorch 1.4 or later
+- Python 3.9 or later
+- Pytorch 1.8 or later
 
-For other requirements, see pyproject.toml
+For other requirements, see pyproject.toml or requirements.txt
+
+# Getting started
+1. Clone this repository
+```
+git clone https://github.com/popura/itmnet-pytorch.git
+cd itmnet-pytorch
+```
+1. Install requirements
+```
+pip install -r requirements.txt
+```
+1. Train iTM-Net
+```
+python ./src/train.py
+```
+1. Test
+```
+python ./src/test.py
+```
