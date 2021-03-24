@@ -16,7 +16,7 @@ from omegaconf import DictConfig, OmegaConf
 import hydra
 
 import deepy.data.transform
-import deepy.data.audio.transform
+import deepy.data.vision.transform
 from deepy.train.trainer import RegressorTrainer
 from deepy.train.extension import (
     IntervalTrigger,
@@ -26,6 +26,7 @@ from deepy.train.extension import (
     HistorySaver
 )
 
+import transform as mytransform
 import util as myutil
 import train_id as tid
 
@@ -47,9 +48,18 @@ def save_model(model: nn.Module, path: str) -> typing.NoReturn:
 
 
 def get_transform(cfg: DictConfig):
-    pre_transform = None
-    transform = torchvision.transforms.ToTensor()
-    return pre_transform, transform
+    pre_transforms = None
+
+    transforms = deepy.data.transform.PairedCompose([
+        deepy.data.transform.ToPairedTransform(
+            torchvision.transforms.ToTensor()),
+        deepy.data.vision.transform.PairedRandomResizedCrop(),
+        deepy.data.transform.SeparatedTransform(
+            transform=mytransform.ReinhardTMO(),
+            target_transform=mytransform.RandomEilertsenTMO()),
+    ])
+
+    return pre_transforms, transforms
 
 
 def get_data_loaders(cfg: DictConfig):
