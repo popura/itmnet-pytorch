@@ -1,0 +1,6 @@
+# @package _group_
+name: itmnet
+param:
+  base_channels: 16
+  depth: 2
+  max_channels: 512
