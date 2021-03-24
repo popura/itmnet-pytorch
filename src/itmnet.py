@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .unet import UNet
+
+from deepy.nn.model import UNet
 
 
 class ITMNet(UNet):
@@ -94,4 +95,4 @@ class ITMNet(UNet):
         x = self.up3(x, lx2)
         x = self.up4(x, lx1)
         x = self.outc(x)
-        return torch.sigmoid(x)
+        return x
