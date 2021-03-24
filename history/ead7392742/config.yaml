@@ -1,0 +1,33 @@
+seed: null
+loader:
+  batch_size: 64
+  num_workers: 0
+epoch: 200
+dataset:
+  name: mydataset
+  path: ./data/HDRForCNN/
+  transforms: null
+  download: true
+model:
+  name: itmnet
+  param:
+    base_channels: 16
+    depth: 2
+    max_channels: 512
+optimizer:
+  name: adam
+  params:
+    lr: 0.001
+    betas:
+    - 0.9
+    - 0.999
+    eps: 1.0e-08
+    weight_decay: 0
+    amsgrad: false
+lr_scheduler:
+  name: multi_step
+  params:
+    milestones:
+    - 0.5
+    - 0.75
+    gamma: 0.1
