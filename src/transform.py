@@ -27,7 +27,7 @@ class ReinhardTMO(Transform):
     
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         x = self.tmo(x.clone().detach().numpy())
-        return x = torch.from_numpy(x.astype(np.float32)).clone()
+        return torch.from_numpy(x.astype(np.float32)).clone()
 
 
 class RandomEilertsenTMO(Transform):
@@ -47,7 +47,7 @@ class RandomEilertsenTMO(Transform):
     """
     def __init__(
         self,
-        ev_range: tuple(int, int) = (-4, 4),
+        ev_range: tuple[int, int] = (-4, 4),
         exp_mean: float = 0.9,
         exp_std: float = 0.1,
         sigma_mean: float = 0.6,
@@ -61,7 +61,7 @@ class RandomEilertsenTMO(Transform):
             mode=mode,
             whitepoint=whitepoint)
         x = tmo(x.clone().detach().numpy())
-        return x = torch.from_numpy(x.astype(np.float32)).clone()
+        return torch.from_numpy(x.astype(np.float32)).clone()
     
     def get_params(self) -> tuple[int, float, float]:
         ev = np.random.uniform(self.ev_range[0], self.ev_range[1])

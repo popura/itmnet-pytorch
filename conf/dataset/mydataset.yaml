@@ -1,5 +1,5 @@
 # @package _group_
 name: mydataset
-path: ./data/mydataset/
+path: ./data/HDRForCNN/
 transforms: null
 download: True

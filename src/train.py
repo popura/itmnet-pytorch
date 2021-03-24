@@ -10,13 +10,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
-from torchsummary import summary
+from torchinfo import summary
 
 from omegaconf import DictConfig, OmegaConf
 import hydra
 
 from deepy.data.dataset import SelfSupervisedDataset
-from deepy.data.vision.dataset import UnorganizedImageDataset
+from deepy.data.vision.visiondataset import UnorganizedImageFolder
 import deepy.data.transform
 import deepy.data.vision.transform
 from deepy.train.trainer import RegressorTrainer

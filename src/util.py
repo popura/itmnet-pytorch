@@ -60,7 +60,7 @@ def get_model(classes: list[str], cfg: DictConfig) -> nn.Module:
             down_conv=nn.Conv2d,
             normalization=nn.BatchNorm2d,
             activation=nn.ReLU,
-            final_activation=nn.Identity):
+            final_activation=nn.Identity)
         if device.type == "cuda":
             net = torch.nn.DataParallel(net)
         net = net.to(device)
