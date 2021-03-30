@@ -96,3 +96,6 @@ ENV/
 /data/
 /model/
 *.pth
+
+# Results
+/result/

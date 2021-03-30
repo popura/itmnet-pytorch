@@ -1,8 +1,10 @@
 from typing import Union, Optional
 
 import numpy as np
+from PIL import Image
 
 import torch
+import torchvision.transforms.functional as F
 
 import hdrpy
 from deepy.data.transform import Transform
@@ -41,7 +43,7 @@ class KinoshitaITMO(Transform):
         self,
         alpha: Optional[float] = 0.18,
         hdr_gmean: Optional[float] = None) -> None:
-        self.itmo = hdrpy.tmo.KinoshitaTMO(
+        self.itmo = hdrpy.tmo.KinoshitaITMO(
             alpha=alpha,
             hdr_gmean=hdr_gmean)
     
@@ -99,4 +101,24 @@ class RandomEilertsenTMO(Transform):
             sigma = np.random.normal(self.sigma_mean, self.sigma_std)
         
         return ev, exponent, sigma
+
+
+class ResizeToMultiple(Transform):
+    def __init__(self, divisor, interpolation=Image.BILINEAR):
+        super().__init__()
+        self.divisor = int(divisor)
+        self.interpolation = interpolation
+
+    def __call__(self, img: Union[Image.Image, torch.Tensor]):
+        if isinstance(img, Image.Image):
+            new_size = (
+                (img.height // self.divisor) * self.divisor,
+                (img.width // self.divisor) * self.divisor)
+        else:
+            new_size = (torch.tensor(img.size()[-2:]) // self.divisor) * self.divisor
+        return F.resize(img, list(new_size), self.interpolation)
+
+    def __repr__(self, ):
+        interpolate_str = _pil_interpolation_to_str[self.interpolation]
+        return self.__class__.__name__ + '(interpolation={0})'.format(interpolate_str)
 
