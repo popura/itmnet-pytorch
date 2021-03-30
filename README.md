@@ -28,6 +28,8 @@ year = {2019}
 - Python 3.9 or later
 - Pytorch 1.8 or later
 - hdrpy 0.1.0 or later (in the `external` directory)
+  
+  Repo: https://github.com/popura/hdrpy
 - deepy 0.5.0 or later (in the `external` directory)
 
 For other requirements, see pyproject.toml
