@@ -27,6 +27,8 @@ year = {2019}
 # Requirements
 - Python 3.9 or later
 - Pytorch 1.8 or later
+- hdrpy 0.1.0 or later (in the `external` directory)
+- deepy 0.5.0 or later (in the `external` directory)
 
 For other requirements, see pyproject.toml
 
@@ -36,15 +38,19 @@ For other requirements, see pyproject.toml
     git clone https://github.com/popura/itmnet-pytorch.git
     cd itmnet-pytorch
     ```
-1. Install requirements
+1. Install requirements.
+
+    If you use poetry as a package manager, it is done by
     ```
-    pip install -r requirements.txt
+    poetry install
     ```
-1. Train iTM-Net
+1. Train iTM-Net.
+   All outputs including trained models will be written in the `history` directory.
     ```
-    python ./src/train.py
+    poetry run python ./src/train.py
     ```
-1. Test
+1. Test.
+   All outputs will be written in the `result` directory.
     ```
-    python ./src/test.py
+    poetry run python ./src/test.py
     ```
