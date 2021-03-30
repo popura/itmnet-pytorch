@@ -67,7 +67,7 @@ class RandomEilertsenTMO(Transform):
     """
     def __init__(
         self,
-        ev_range: tuple[int, int] = (-4, 4),
+        ev_range: tuple[int, int] = (-2, 2),
         exp_mean: float = 0.9,
         exp_std: float = 0.1,
         sigma_mean: float = 0.6,

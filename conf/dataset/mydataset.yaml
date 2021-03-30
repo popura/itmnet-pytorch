@@ -11,10 +11,10 @@ transforms:
           - 256
           - 256
         scale:
-          - 0.6
+          - 0.2
           - 1.0
         ratio:
-          - 0.75
-          - 1.33
+          - 0.85
+          - 1.15
         interpolation: Image.BICUBIC
 pre_load: false
