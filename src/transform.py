@@ -20,7 +20,6 @@ class ReinhardTMO(Transform):
         ev: float = 0,
         mode: str = "global",
         whitepoint: Union[float, str] = "Inf") -> None:
-        type(hdrpy.tmo.ReinhardTMO())
         self.tmo = hdrpy.tmo.ReinhardTMO(
             ev=ev,
             mode=mode,
@@ -28,6 +27,26 @@ class ReinhardTMO(Transform):
     
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         x = self.tmo(x.clone().detach().numpy().transpose((1, 2, 0)))
+        return torch.from_numpy(x.astype(np.float32).transpose((2, 0, 1))).clone()
+
+
+class KinoshitaITMO(Transform):
+    """Wrapper for hdrpy.tmo.KinoshitaITMO.
+    Attributes:
+        itmo: an instance of hdrpy.tmo.KinoshitaITMO
+    Examples:
+    >>>
+    """
+    def __init__(
+        self,
+        alpha: Optional[float] = 0.18,
+        hdr_gmean: Optional[float] = None) -> None:
+        self.itmo = hdrpy.tmo.KinoshitaTMO(
+            alpha=alpha,
+            hdr_gmean=hdr_gmean)
+    
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.itmo(x.clone().detach().numpy().transpose((1, 2, 0)))
         return torch.from_numpy(x.astype(np.float32).transpose((2, 0, 1))).clone()
 
 
