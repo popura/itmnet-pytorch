@@ -17,3 +17,4 @@ transforms:
           - 0.75
           - 1.33
         interpolation: Image.BICUBIC
+pre_load: false
