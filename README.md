@@ -46,6 +46,9 @@ For other requirements, see pyproject.toml
     ```
     poetry install
     ```
+1. Prepare a directory for storing HDR images (e.g., `./data/HDRForCNN/`), where the directory should have `train`, `validation`, and `test` directories.
+1. Put HDR images into the `train`, `validation`, and `test` directories.
+1. Rewrite the path to the data directory in `./conf/dataset/mydataset.yaml`
 1. Train iTM-Net.
    All outputs including trained models will be written in the `history` directory.
     ```

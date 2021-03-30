@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import argparse
->>>>>>> origin/develop
 from pathlib import Path
 import typing
 
@@ -15,17 +12,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
-<<<<<<< HEAD
-from torchinfo import summary
-
-from omegaconf import DictConfig, OmegaConf
-import hydra
-=======
 import torchvision.transforms.functional as F
 from torchinfo import summary
 
 from omegaconf import DictConfig, OmegaConf
->>>>>>> origin/develop
 
 import hdrpy
 
