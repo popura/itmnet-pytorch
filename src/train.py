@@ -1,5 +1,6 @@
 from pathlib import Path
 import typing
+import functools
 
 import numpy as np
 import matplotlib
@@ -68,8 +69,11 @@ def get_transform(cfg: DictConfig):
             size=tuple(dict_cfg_crop.size), scale=tuple(dict_cfg_crop.scale),
             ratio=tuple(dict_cfg_crop.ratio), interpolation=interpolation),
         deepy.data.transform.SeparatedTransform(
-            transform=mytransform.ReinhardTMO(),
-            target_transform=mytransform.RandomEilertsenTMO()),
+            transform=deepy.data.transform.Compose([
+                mytransform.RandomEilertsenTMO(),
+                deepy.data.transform.Lambda(functools.partial(torch.clamp, min=0, max=1))]),
+            target_transform=mytransform.ReinhardTMO()
+        ),
     ])
 
     return pre_transforms, transforms
@@ -84,16 +88,18 @@ def get_data_loaders(cfg: DictConfig):
     trainset = SelfSupervisedDataset(
         UnorganizedImageFolder(
             str(p / "train"),
-            pre_load=False,
-            loader=hdrpy.io.read, is_valid_file=myutil.is_valid_file),
+            pre_load=cfg.dataset.pre_load,
+            loader=functools.partial(hdrpy.io.read, nan_sub=0, inf_sub=np.finfo(np.float64).max),
+            is_valid_file=myutil.is_valid_file),
         transforms=transforms
     )
 
     valset = SelfSupervisedDataset(
         UnorganizedImageFolder(
             str(p / "validation"),
-            pre_load=False,
-            loader=hdrpy.io.read, is_valid_file=myutil.is_valid_file),
+            pre_load=cfg.dataset.pre_load,
+            loader=functools.partial(hdrpy.io.read, nan_sub=0, inf_sub=np.finfo(np.float64).max),
+            is_valid_file=myutil.is_valid_file),
         transforms=transforms
     )
 
