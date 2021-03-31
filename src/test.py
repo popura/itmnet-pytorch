@@ -75,9 +75,13 @@ def predict(path, dataset, net, device):
     (p / 'imgs').mkdir(parents=True, exist_ok=True)
     transforms = deepy.data.transform.Compose(
         [torchvision.transforms.ToTensor(),
-         mytransform.ResizeToMultiple(divisor=16, interpolation=Image.BICUBIC)])
+         mytransform.ResizeToMultiple(divisor=16, interpolation=Image.BICUBIC),
+         mytransform.RandomEilertsenTMO()])
     
     post_transforms = mytransform.KinoshitaITMO()
+    target_transforms = deepy.data.transform.Compose(
+        [torchvision.transforms.ToTensor(),
+         mytransform.ReinhardTMO()])
 
     with torch.no_grad():
         for i in range(len(dataset)):
@@ -86,15 +90,16 @@ def predict(path, dataset, net, device):
 
             print('{:04d}/{:04d}: File Name {}'.format(i, len(dataset), q.name))
 
-            sample, target = dataset[i]
+            sample, hdr_target = dataset[i]
             sample = transforms(sample).unsqueeze(0).float().to(device)
             ldr_predict = net(sample).to('cpu').clone().detach().squeeze(0)
             hdr_predict = post_transforms(torch.clamp(ldr_predict, 0, 1))
-            height, width, _ = target.shape
+            height, width, _ = hdr_target.shape
             sample = sample.to('cpu').clone().detach().squeeze(0)
             sample = F.resize(sample, (height, width), Image.BICUBIC)
             ldr_predict = F.resize(ldr_predict, (height, width), Image.BICUBIC)
             hdr_predict = F.resize(hdr_predict, (height, width), Image.BICUBIC)
+            ldr_target = target_transforms(hdr_target)
 
             hdrpy.io.write(
                 p / 'imgs' / ('{:04d}'.format(i) + '_' + q.stem + '_input.jpg'),
@@ -106,8 +111,11 @@ def predict(path, dataset, net, device):
                 p / 'imgs' / ('{:04d}'.format(i) + '_' + q.stem + '_prediction.pfm'),
                 hdr_predict.clone().detach().numpy().transpose((1, 2, 0)))
             hdrpy.io.write(
+                p / 'imgs' / ('{:04d}'.format(i) + '_' + q.stem + '_reinhard.jpg'),
+                ldr_target.clone().detach().numpy().transpose((1, 2, 0)))
+            hdrpy.io.write(
                 p / 'imgs' / ('{:04d}'.format(i) + '_' + q.stem + '_target.pfm'),
-                target)
+                hdr_target)
 
 
 def main(cfg: DictConfig, train_id:str) -> None:
