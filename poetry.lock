@@ -400,7 +400,7 @@ deepy = [
     {file = "deepy-0.5.0-py3-none-any.whl", hash = "sha256:818210271b98233e3a1bf24d6ad281e3e3823ebf00ad83b94164b650ede79d25"},
 ]
 hdrpy = [
-    {file = "hdrpy-0.1.0-py3-none-any.whl", hash = "sha256:da8cc4aa0edb6fb34895114ba37a609699a2d088869a88b5cd67bae5f542da97"},
+    {file = "hdrpy-0.1.0-py3-none-any.whl", hash = "sha256:bdbdfe6125fb811e633e6722abdb8a99b7d51bc6f923f4256ed6afd2beaed0ae"},
 ]
 hydra-core = [
     {file = "hydra-core-1.0.6.tar.gz", hash = "sha256:be5fe119eb41ada20c82835b153b956781de7e2506670ba942f7453b2e850950"},

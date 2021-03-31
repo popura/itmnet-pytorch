@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 import typing
 
@@ -11,10 +12,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
+import torchvision.transforms.functional as F
 from torchinfo import summary
 
 from omegaconf import DictConfig, OmegaConf
-import hydra
 
 import hdrpy
 
@@ -56,15 +57,14 @@ def get_transform(cfg: DictConfig):
 
 
 def get_dataset(cfg: DictConfig):
-    cwd = hydra.utils.get_original_cwd()
+    cwd = Path.cwd()
     p = Path(cwd) / cfg.dataset.path
 
     testset = SelfSupervisedDataset(
         UnorganizedImageFolder(
             str(p / "test"),
             pre_load=False,
-            loader=hdrpy.io.read, is_valid_file=myutil.is_valid_file),
-        transforms=transforms
+            loader=hdrpy.io.read, is_valid_file=myutil.is_valid_file)
     )
 
     return testset
@@ -74,36 +74,40 @@ def predict(path, dataset, net, device):
     p = Path(path)
     (p / 'imgs').mkdir(parents=True, exist_ok=True)
     transforms = deepy.data.transform.Compose(
-        [deepy.data.vision.transform.ResizeToMultiple(divisor=16, interpolation=Image.BICUBIC),
-         torchvision.transforms.ToTensor()])
+        [torchvision.transforms.ToTensor(),
+         mytransform.ResizeToMultiple(divisor=16, interpolation=Image.BICUBIC)])
     
     post_transforms = mytransform.KinoshitaITMO()
 
     with torch.no_grad():
         for i in range(len(dataset)):
-            q, *_ = dataset.samples[i]
+            q = dataset.dataset.samples[i]
             q = Path(q)
 
             print('{:04d}/{:04d}: File Name {}'.format(i, len(dataset), q.name))
 
             sample, target = dataset[i]
-            sample = transforms(sample).unsqueeze(0).to(device)
-            predict = net(sample).to('cpu').clone().detach().squeeze(0)
-            predict = post_transforms(torch.clamp(predict, 0, 1))
-            height, width, _ = target.size()
+            sample = transforms(sample).unsqueeze(0).float().to(device)
+            ldr_predict = net(sample).to('cpu').clone().detach().squeeze(0)
+            hdr_predict = post_transforms(torch.clamp(ldr_predict, 0, 1))
+            height, width, _ = target.shape
             sample = sample.to('cpu').clone().detach().squeeze(0)
             sample = F.resize(sample, (height, width), Image.BICUBIC)
-            predict = F.resize(predict, (height, width), Image.BICUBIC)
+            ldr_predict = F.resize(ldr_predict, (height, width), Image.BICUBIC)
+            hdr_predict = F.resize(hdr_predict, (height, width), Image.BICUBIC)
 
             hdrpy.io.write(
-                p / 'imgs' / ('{:04d}'.format(i) + '_' + q.stem + '_input.pfm'),
+                p / 'imgs' / ('{:04d}'.format(i) + '_' + q.stem + '_input.jpg'),
                 sample.clone().detach().numpy().transpose((1, 2, 0)))
             hdrpy.io.write(
+                p / 'imgs' / ('{:04d}'.format(i) + '_' + q.stem + '_output.jpg'),
+                ldr_predict.clone().detach().numpy().transpose((1, 2, 0)))
+            hdrpy.io.write(
                 p / 'imgs' / ('{:04d}'.format(i) + '_' + q.stem + '_prediction.pfm'),
-                predict.clone().detach().numpy().transpose((1, 2, 0)))
+                hdr_predict.clone().detach().numpy().transpose((1, 2, 0)))
             hdrpy.io.write(
                 p / 'imgs' / ('{:04d}'.format(i) + '_' + q.stem + '_target.pfm'),
-                target.clone().detach().numpy().transpose((1, 2, 0)))
+                target)
 
 
 def main(cfg: DictConfig, train_id:str) -> None:
