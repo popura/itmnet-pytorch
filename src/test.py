@@ -124,7 +124,7 @@ def main(cfg: DictConfig, train_id:str) -> None:
     # Setting seed 
     myutil.set_random_seed(0)
 
-    model_file_name = "{}_best.pth".format(cfg.model.name)
+    model_file_name = "{}.pth".format(cfg.model.name)
     
     # Checking history directory
     history_dir = cwd / 'history' / train_id
@@ -149,6 +149,7 @@ def main(cfg: DictConfig, train_id:str) -> None:
     # Testing
     testset = get_dataset(cfg)
     net = myutil.get_model(cfg)
+    net.module.load_state_dict(torch.load(str(history_dir / model_file_name)))
     predict(result_dir, testset, net, device)
 
 

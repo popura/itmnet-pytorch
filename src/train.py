@@ -59,6 +59,7 @@ def get_transform(cfg: DictConfig):
     dict_cfg_crop = cfg.dataset.transforms.paired_random_resized_crop.param
     if dict_cfg_crop.interpolation == 'Image.BICUBIC':
         interpolation = Image.BICUBIC
+    dict_cfg_eilertsen = cfg.dataset.transforms.random_eilertsen_tmo.param
 
     transforms = deepy.data.transform.PairedCompose([
         deepy.data.transform.ToPairedTransform(
@@ -70,9 +71,16 @@ def get_transform(cfg: DictConfig):
             ratio=tuple(dict_cfg_crop.ratio), interpolation=interpolation),
         deepy.data.transform.SeparatedTransform(
             transform=deepy.data.transform.Compose([
-                mytransform.RandomEilertsenTMO(),
+                mytransform.RandomEilertsenTMO(
+                    ev_range=tuple(dict_cfg_eilertsen.ev_range),
+                    exp_mean=dict_cfg_eilertsen.exp_mean,
+                    exp_std=dict_cfg_eilertsen.exp_mean,
+                    sigma_mean=dict_cfg_eilertsen.exp_mean,
+                    sigma_std=dict_cfg_eilertsen.exp_mean
+                ),
                 deepy.data.transform.Lambda(functools.partial(torch.clamp, min=0, max=1))]),
-            target_transform=mytransform.ReinhardTMO()
+            target_transform=mytransform.ReinhardTMO(
+                **cfg.dataset.transforms.reinhard_tmo.param),
         ),
     ])
 
@@ -179,14 +187,30 @@ def main(cfg: DictConfig) -> None:
 
     # Training
     trainloaders, valloaders = get_data_loaders(cfg)
+
+    # Confirming dataset
+    dataiter = iter(trainloaders)
+    inputs, labels = next(dataiter)
+    hdrpy.io.write(
+        history_dir / 'input_sample.jpg',
+        inputs[0].clone().detach().numpy().transpose((1, 2, 0)))
+    hdrpy.io.write(
+        history_dir / 'label_sample.jpg',
+        labels[0].clone().detach().numpy().transpose((1, 2, 0)))
+    
     net = myutil.get_model(cfg)
+    # Checking initial DNN
+    # outputs = net(inputs.to(device)).to('cpu').clone().detach()
+    # hdrpy.io.write(
+    #     history_dir / 'initial_output_sample.jpg',
+    #     outputs[0].clone().detach().numpy().transpose((1, 2, 0)))
 
     criterion = nn.L1Loss()
     optimizer = get_optimizer(net.parameters(), cfg)
     scheduler = get_scheduler(optimizer, cfg)
     extensions = [ModelSaver(directory=history_dir,
                              name=lambda x: cfg.model.name+"_best.pth",
-                             trigger=MaxValueTrigger(mode="validation", key="loss")),
+                             trigger=MinValueTrigger(mode="validation", key="loss")),
                   HistorySaver(directory=history_dir,
                                name=lambda x: cfg.model.name+"_history.pth",
                                trigger=IntervalTrigger(period=1))]
@@ -196,6 +220,13 @@ def main(cfg: DictConfig) -> None:
                                init_epoch=0,
                                device=device)
     trainer.train(cfg.epoch, valloaders)
+
+    # Checking trained DNN
+    # outputs = net(inputs.to(device)).to('cpu').clone().detach()
+    # hdrpy.io.write(
+    #     history_dir / 'output_sample.jpg',
+    #     outputs[0].clone().detach().numpy().transpose((1, 2, 0)))
+    # print(outputs[0])
 
     save_model(net, str(history_dir / "{}.pth".format(cfg.model.name)))
 

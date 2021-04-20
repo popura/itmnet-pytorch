@@ -9,6 +9,7 @@ from torchinfo import summary
 from omegaconf import DictConfig
 
 from deepy.data.dataset import has_file_allowed_extension
+from deepy.nn.model import UNet
 
 from itmnet import ITMNet
 
@@ -63,7 +64,24 @@ def get_model(cfg: DictConfig) -> nn.Module:
             down_conv=nn.Conv2d,
             normalization=nn.BatchNorm2d,
             activation=nn.ReLU,
-            final_activation=nn.Identity)
+            final_activation=nn.ReLU)
+        if device.type == "cuda":
+            net = torch.nn.DataParallel(net)
+        net = net.to(device)
+        summary(net, input_size=(3, 256, 256))
+    elif cfg.model.name == "unet":
+        net = UNet(
+            in_channels=3,
+            out_channels=3,
+            base_channels=cfg.model.param.base_channels,
+            depth=cfg.model.param.depth,
+            max_channels=cfg.model.param.max_channels,
+            conv=nn.Conv2d,
+            up_conv=nn.ConvTranspose2d,
+            down_conv=nn.Conv2d,
+            normalization=nn.BatchNorm2d,
+            activation=nn.ReLU,
+            final_activation=nn.ReLU)
         if device.type == "cuda":
             net = torch.nn.DataParallel(net)
         net = net.to(device)

@@ -74,7 +74,7 @@ class ITMNet(UNet):
                  max_channels: int=512,
                  conv=nn.Conv2d, up_conv=nn.ConvTranspose2d, down_conv=nn.Conv2d,
                  normalization=nn.BatchNorm2d, activation=nn.ReLU,
-                 final_activation=nn.Identity):
+                 final_activation=nn.ReLU):
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,

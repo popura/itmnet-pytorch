@@ -1,0 +1,48 @@
+seed: null
+loader:
+  batch_size: 32
+  num_workers: 10
+epoch: 1
+dataset:
+  name: mydataset
+  path: ./data/HDRForCNN/
+  transforms:
+    paired_random_horizontal_flip:
+      param:
+        p: 0.5
+    paired_random_resized_crop:
+      param:
+        size:
+        - 256
+        - 256
+        scale:
+        - 0.2
+        - 1.0
+        ratio:
+        - 0.85
+        - 1.15
+        interpolation: Image.BICUBIC
+  pre_load: false
+model:
+  name: unet
+  param:
+    base_channels: 32
+    depth: 4
+    max_channels: 512
+optimizer:
+  name: adam
+  params:
+    lr: 0.002
+    betas:
+    - 0.9
+    - 0.999
+    eps: 1.0e-08
+    weight_decay: 0
+    amsgrad: false
+lr_scheduler:
+  name: multi_step
+  params:
+    milestones:
+    - 0.5
+    - 0.75
+    gamma: 0.1

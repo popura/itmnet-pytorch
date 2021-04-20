@@ -1,0 +1,6 @@
+# @package _group_
+name: unet 
+param:
+  base_channels: 32
+  depth: 4
+  max_channels: 512
